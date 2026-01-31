@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Risk Calculator</title>
+
+<!-- iOS PWA settings -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Risk Calc">
+
+<style>
+:root {
+  --bg: #0b0b0f;
+  --card: #1c1c1e;
+  --input: #2c2c2e;
+  --text: #f2f2f7;
+  --subtext: #8e8e93;
+  --accent: #0a84ff;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.container {
+  padding: 20px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+label {
+  font-size: 12px;
+  color: var(--subtext);
+  display: block;
+  margin-bottom: 4px;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: var(--input);
+  color: var(--text);
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 14px;
+}
+
+.result {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: pre-line;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="card">
+    <label>Account Balance</label>
+    <input id="balance" type="number" step="any">
+
+    <label>Risk %</label>
+    <input id="risk" type="number" step="any">
+
+    <label>Entry Price</label>
+    <input id="entry" type="number" step="any">
+
+    <label>Stop Loss</label>
+    <input id="sl" type="number" step="any">
+
+    <label>Take Profit</label>
+    <input id="tp" type="number" step="any">
+
+    <label>Symbol</label>
+    <select id="pair">
+      <option>EURUSD</option>
+      <option>USDJPY</option>
+      <option>XAUUSD</option>
+    </select>
+  </div>
+
+  <button onclick="calculate()">Calculate</button>
+
+  <div class="card result" id="result"></div>
+
+</div>
+
+<script>
+function calculate() {
+  const balance = parseFloat(balance.value);
+  const riskPercent = parseFloat(risk.value);
+  const entryPrice = parseFloat(entry.value);
+  const slPrice = parseFloat(sl.value);
+  const tpPrice = parseFloat(tp.value);
+  const pair = document.getElementById("pair").value;
+
+  if (!balance || !riskPercent || !entryPrice || entryPrice === slPrice) {
+    result.textContent = "Invalid input";
+    return;
+  }
+
+  const riskAmount = balance * (riskPercent / 100);
+  let pipValue, slPips, tpPips;
+
+  if (pair === "EURUSD") {
+    const pipSize = 0.0001;
+    pipValue = 100000 * pipSize;
+    slPips = Math.abs(entryPrice - slPrice) / pipSize;
+    tpPips = Math.abs(tpPrice - entryPrice) / pipSize;
+
+  } else if (pair === "USDJPY") {
+    const pipSize = 0.01;
+    pipValue = (100000 * pipSize) / entryPrice;
+    slPips = Math.abs(entryPrice - slPrice) / pipSize;
+    tpPips = Math.abs(tpPrice - entryPrice) / pipSize;
+
+  } else if (pair === "XAUUSD") {
+    pipValue = 100;
+    slPips = Math.abs(entryPrice - slPrice);
+    tpPips = Math.abs(tpPrice - entryPrice);
+  }
+
+  const lotSize = riskAmount / (slPips * pipValue);
+  const profit = tpPips * pipValue * lotSize;
+
+  result.textContent =
+    `Risk: $${riskAmount.toFixed(2)}\n` +
+    `Lot Size: ${lotSize.toFixed(2)}\n` +
+    `Loss: $${riskAmount.toFixed(2)}\n` +
+    `Profit: $${profit.toFixed(2)}`;
+}
+</script>
+</body>
+</html>
